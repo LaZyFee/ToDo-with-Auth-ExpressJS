@@ -8,7 +8,7 @@ const todoSchema = mongoose.Schema({
     description: String,
     status: {
         type: String,
-        enum: ["active", "inactive"],
+        enum: ["active", "complete"],
     },
     date: {
         type: Date,
@@ -20,29 +20,4 @@ const todoSchema = mongoose.Schema({
     }
 });
 
-// Instance methods
-todoSchema.methods = {
-    findActive: function () {
-        return this.model("Todo").find({ status: "active" });
-    },
-
-    findActiveCallback: function (cb) {
-        return this.model("Todo").find({ status: "active" }, cb);
-    }
-};
-
-// Static methods
-todoSchema.statics = {
-    findByJs: function () {
-        return this.find({ title: /js/i });
-    }
-};
-
-// Query helpers
-todoSchema.query = {
-    byLanguage: function (language) {
-        return this.find({ title: new RegExp(language, "i") });
-    }
-};
-
-module.exports = todoSchema;
+module.exports = mongoose.model("Todo", todoSchema);
