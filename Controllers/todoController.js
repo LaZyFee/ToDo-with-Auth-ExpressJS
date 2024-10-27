@@ -57,7 +57,11 @@ const completeTodo = async (req, res) => {
 
         const updatedTodo = await Todo.findOneAndUpdate(
             { _id: id, user: userId },
-            { status: "complete" },
+            {
+                status: "complete",
+                completedAt: new Date(),
+            },
+
             { new: true }
         );
 
