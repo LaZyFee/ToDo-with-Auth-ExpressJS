@@ -6,23 +6,30 @@ const {
     getActiveTodos,
     updateTodo,
     deleteTodo,
-    updateTodoStatus
+    updateTodoStatus,
+    completeTodo,
+    getCompleteTodos
 } = require("../Controllers/todoController");
 
 // Get all active todos 
 router.get("/active", getActiveTodos);
 
-// Post a todo
-router.post("/", createTodo);
-
 // Get all todos
-router.get("/", getTodos);
+router.get("/todos", getTodos);
+
+// Complete a todo
+router.patch("/:id/complete", completeTodo);
+
+router.get("/complete", getCompleteTodos);
+
+// Post a todo
+router.post("/create", createTodo);
 
 // Put (update) a todo
-router.put("/:id", updateTodo);
+router.put("/:id/update", updateTodo);
 
 // Update todo status by id
-router.patch("/:id/status", updateTodoStatus);
+router.put("/:id/status", updateTodoStatus);
 
 // Delete a todo
 router.delete("/:id", deleteTodo);

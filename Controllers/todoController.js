@@ -1,14 +1,8 @@
 const Todo = require("../schemas/todoSchema");
-
-
 const createTodo = async (req, res) => {
     try {
         const { title, description, date } = req.body;
-
-        // Validate required fields
-        if (!title || !req.userId) {
-            return res.status(400).json({ message: "Title and user ID are required" });
-        }
+        const userId = req.userId; // Assuming authentication middleware sets req.userId
 
         // Create new todo with user association
         const newTodo = new Todo({
@@ -16,7 +10,7 @@ const createTodo = async (req, res) => {
             description,
             status: "active",
             date,
-            user: req.userId,
+            user: userId,
         });
 
         const savedTodo = await newTodo.save();
@@ -25,88 +19,139 @@ const createTodo = async (req, res) => {
             data: savedTodo,
         });
     } catch (err) {
-        res.status(500).json({
-            error: err.message,
-        });
+        res.status(500).json({ error: err.message });
     }
 };
 
+
 const getTodos = async (req, res) => {
     try {
-        const todos = await Todo.find();
+        const userId = req.userId;
+        const todos = await Todo.find({ user: userId });
         res.status(200).json({
             message: "Todos retrieved successfully",
             data: todos,
         });
     } catch (err) {
-        res.status(500).json({
-            error: err.message,
-        });
+        res.status(500).json({ error: err.message });
     }
-}
-const updateTodo = async (req, res) => {
-    try {
-        const updatedTodo = await Todo.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        if (!updatedTodo) {
-            return res.status(404).json({
-                message: "Todo not found",
-            });
-        }
-        res.status(200).json({
-            message: "Todo updated successfully",
-            data: updatedTodo,
-        });
-    } catch (err) {
-        res.status(500).json({
-            error: err.message,
-        });
-    }
-}
-const deleteTodo = async (req, res) => {
-    try {
-        const deletedTodo = await Todo.findByIdAndDelete(req.params.id);
-        if (!deletedTodo) {
-            return res.status(404).json({
-                message: "Todo not found",
-            });
-        }
-        res.status(200).json({
-            message: "Todo deleted successfully",
-            data: deletedTodo,
-        });
-    } catch (err) {
-        res.status(500).json({
-            error: err.message,
-        });
-    }
-}
+};
 
 const getActiveTodos = async (req, res) => {
     try {
-        const todos = await Todo.find({ status: "active" });
+        const userId = req.userId;
+        const todos = await Todo.find({ user: userId, status: "active" });
         res.status(200).json({
             message: "Active todos retrieved successfully",
             data: todos,
         });
     } catch (err) {
-        res.status(500).json({
-            error: err.message,
-        });
+        res.status(500).json({ error: err.message });
     }
-}
+};
+
+const completeTodo = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.userId;
+
+        const updatedTodo = await Todo.findOneAndUpdate(
+            { _id: id, user: userId },
+            { status: "complete" },
+            { new: true }
+        );
+
+        if (!updatedTodo) {
+            return res.status(404).json({ message: "Todo not found or unauthorized" });
+        }
+
+        res.status(200).json({
+            message: "Todo marked as complete",
+            data: updatedTodo,
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+const getCompleteTodos = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const todos = await Todo.find({ user: userId, status: "complete" });
+        res.status(200).json({
+            message: "Completed todos retrieved successfully",
+            data: todos,
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+
+
+
+const updateTodo = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { id } = req.params;
+
+        const updatedTodo = await Todo.findOneAndUpdate(
+            { _id: id, user: userId },
+            req.body,
+            { new: true }
+        );
+
+        if (!updatedTodo) {
+            return res.status(404).json({ message: "Todo not found or unauthorized" });
+        }
+
+        res.status(200).json({
+            message: "Todo updated successfully",
+            data: updatedTodo,
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+const deleteTodo = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { id } = req.params;
+
+        const deletedTodo = await Todo.findOneAndDelete({ _id: id, user: userId });
+
+        if (!deletedTodo) {
+            return res.status(404).json({ message: "Todo not found or unauthorized" });
+        }
+
+        res.status(200).json({
+            message: "Todo deleted successfully",
+            data: deletedTodo,
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 const updateTodoStatus = async (req, res) => {
     try {
-        const { id } = req.params; // Todo ID from request parameters
-        const { status } = req.body; // Status from request body, e.g., "complete"
+        const { id } = req.params;
+        const { status } = req.body;
+        const userId = req.userId;
 
-        // Check if the status is either 'active' or 'complete' to maintain allowed values
         if (!["active", "complete"].includes(status)) {
             return res.status(400).json({ message: "Invalid status value" });
         }
 
-        const updatedTodo = await Todo.findByIdAndUpdate(id, { status }, { new: true });
+        const updatedTodo = await Todo.findOneAndUpdate(
+            { _id: id, user: userId },
+            { status },
+            { new: true }
+        );
+
         if (!updatedTodo) {
-            return res.status(404).json({ message: "Todo not found" });
+            return res.status(404).json({ message: "Todo not found or unauthorized" });
         }
 
         res.status(200).json({
@@ -125,5 +170,7 @@ module.exports = {
     deleteTodo,
     getTodos,
     getActiveTodos,
-    updateTodoStatus
+    updateTodoStatus,
+    completeTodo,
+    getCompleteTodos
 }
