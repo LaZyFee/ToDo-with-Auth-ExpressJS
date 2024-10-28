@@ -2,7 +2,7 @@ const Todo = require("../schemas/todoSchema");
 const createTodo = async (req, res) => {
     try {
         const { title, description, date } = req.body;
-        const userId = req.userId; // Assuming authentication middleware sets req.userId
+        const userId = req.userId;
 
         // Create new todo with user association
         const newTodo = new Todo({
