@@ -98,16 +98,34 @@ const updateTodo = async (req, res) => {
     try {
         const userId = req.userId;
         const { id } = req.params;
+        const { title, description } = req.body;
 
-        const updatedTodo = await Todo.findOneAndUpdate(
-            { _id: id, user: userId },
-            req.body,
-            { new: true }
-        );
+        const existingTodo = await Todo.findOne({ _id: id, user: userId });
 
-        if (!updatedTodo) {
+        if (!existingTodo) {
             return res.status(404).json({ message: "Todo not found or unauthorized" });
         }
+
+        const updates = {};
+
+        if (title && existingTodo.title !== title) {
+            updates.title = title; // Update title if it has changed
+        }
+
+        if (description && existingTodo.description !== description) {
+            updates.description = description; // Update description if it has changed
+        }
+
+        if (Object.keys(updates).length > 0) {
+            updates.date = new Date(); // Update date to current time
+        }
+
+        // Update the todo
+        const updatedTodo = await Todo.findOneAndUpdate(
+            { _id: id, user: userId },
+            { ...updates },
+            { new: true }
+        );
 
         res.status(200).json({
             message: "Todo updated successfully",
@@ -117,6 +135,7 @@ const updateTodo = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
 
 const deleteTodo = async (req, res) => {
     try {
