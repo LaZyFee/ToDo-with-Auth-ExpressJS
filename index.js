@@ -1,9 +1,9 @@
+require('dotenv').config()
 const express = require("express");
+const cors = require("cors");
 const todoHandler = require("./routeHandler/todoHandler");
 const userHandler = require("./routeHandler/userHandler");
 const connectDB = require("./DB/connectDB");
-const cors = require("cors");
-require('dotenv').config()
 
 const app = express();
 app.use(express.json());
