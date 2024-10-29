@@ -10,7 +10,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors(
     {
-        origin: `https://todowebappx.netlify.app`,
+        origin: ["http://localhost:5173", "https://todowebappx.netlify.app"],
         credentials: true
     }
 ));
