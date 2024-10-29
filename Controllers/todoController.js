@@ -1,16 +1,16 @@
 const Todo = require("../schemas/todoSchema");
 const createTodo = async (req, res) => {
     try {
-        const { title, description, date } = req.body;
-        const userId = req.userId;
+        const { title, description, date, email } = req.body;
+        console.log(req.body);
 
-        // Create new todo with user association
+
         const newTodo = new Todo({
             title,
             description,
             status: "active",
             date,
-            user: userId,
+            email
         });
 
         const savedTodo = await newTodo.save();
@@ -26,8 +26,8 @@ const createTodo = async (req, res) => {
 
 const getTodos = async (req, res) => {
     try {
-        const userId = req.userId;
-        const todos = await Todo.find({ user: userId });
+        const userEmail = req.params.email;
+        const todos = await Todo.find({ email: userEmail });
         res.status(200).json({
             message: "Todos retrieved successfully",
             data: todos,
@@ -37,10 +37,11 @@ const getTodos = async (req, res) => {
     }
 };
 
+
 const getActiveTodos = async (req, res) => {
     try {
-        const userId = req.userId;
-        const todos = await Todo.find({ user: userId, status: "active" });
+        const userEmail = req.query.email;
+        const todos = await Todo.find({ email: userEmail, status: "active" });
         res.status(200).json({
             message: "Active todos retrieved successfully",
             data: todos,
@@ -53,10 +54,9 @@ const getActiveTodos = async (req, res) => {
 const completeTodo = async (req, res) => {
     try {
         const { id } = req.params;
-        const userId = req.userId;
 
         const updatedTodo = await Todo.findOneAndUpdate(
-            { _id: id, user: userId },
+            { _id: id },
             {
                 status: "complete",
                 completedAt: new Date(),
@@ -80,8 +80,8 @@ const completeTodo = async (req, res) => {
 
 const getCompleteTodos = async (req, res) => {
     try {
-        const userId = req.userId;
-        const todos = await Todo.find({ user: userId, status: "complete" });
+        const userEmail = req.query.email;
+        const todos = await Todo.find({ email: userEmail, status: "complete" });
         res.status(200).json({
             message: "Completed todos retrieved successfully",
             data: todos,
@@ -92,8 +92,6 @@ const getCompleteTodos = async (req, res) => {
 };
 
 
-
-
 const updateTodo = async (req, res) => {
     try {
         const userId = req.userId;
@@ -101,12 +99,13 @@ const updateTodo = async (req, res) => {
         const { title, description } = req.body;
 
         const existingTodo = await Todo.findOne({ _id: id, user: userId });
+        console.log(existingTodo, "existingTodo");
 
         if (!existingTodo) {
             return res.status(404).json({ message: "Todo not found or unauthorized" });
         }
 
-        const updates = {};
+        const updates = { date: new Date() }; // Initialize updates with the current date
 
         if (title && existingTodo.title !== title) {
             updates.title = title; // Update title if it has changed
@@ -116,14 +115,20 @@ const updateTodo = async (req, res) => {
             updates.description = description; // Update description if it has changed
         }
 
-        if (Object.keys(updates).length > 0) {
-            updates.date = new Date(); // Update date to current time
+        // Reset completedAt if it's already set
+        if (existingTodo.completedAt) {
+            updates.completedAt = null;
+        }
+
+        // Change status to "active" if it is currently "complete"
+        if (existingTodo.status === "complete") {
+            updates.status = "active";
         }
 
         // Update the todo
         const updatedTodo = await Todo.findOneAndUpdate(
             { _id: id, user: userId },
-            { ...updates },
+            { $set: updates },
             { new: true }
         );
 
@@ -135,6 +140,8 @@ const updateTodo = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+
 
 
 const deleteTodo = async (req, res) => {
@@ -161,14 +168,13 @@ const updateTodoStatus = async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
-        const userId = req.userId;
 
         if (!["active", "complete"].includes(status)) {
             return res.status(400).json({ message: "Invalid status value" });
         }
 
         const updatedTodo = await Todo.findOneAndUpdate(
-            { _id: id, user: userId },
+            { _id: id },
             { status },
             { new: true }
         );
@@ -185,7 +191,6 @@ const updateTodoStatus = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
-
 
 module.exports = {
     createTodo,

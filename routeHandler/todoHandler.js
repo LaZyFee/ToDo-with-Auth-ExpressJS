@@ -15,7 +15,7 @@ const {
 router.get("/active", getActiveTodos);
 
 // Get all todos
-router.get("/todos", getTodos);
+router.get("/todos/:email", getTodos);
 
 // Complete a todo
 router.patch("/:id/complete", completeTodo);
