@@ -34,6 +34,3 @@ app.use(errorHandler);
 app.get("/", (req, res) => {
     res.send("Hello World!");
 });
-
-// Export the app for Vercel
-module.exports = app;
